@@ -272,6 +272,38 @@ class CodigoLegalViewSet(viewsets.ModelViewSet):
             return CodigoLegalListSerializer
         return CodigoLegalSerializer
 
+    def perform_update(self, serializer):
+        """HU-05: Notificar automáticamente a los usuarios sobre cambios en un artículo."""
+        codigo = serializer.save()
+        mensaje = (
+            f"Se han registrado modificaciones en el artículo {codigo.numero_articulo} "
+            f"perteneciente a la norma '{codigo.nombre_norma}'. Estado de vigencia: "
+            f"{'Vigente' if codigo.vigencia else 'Histórico/Derogado'}."
+        )
+        Notificacion.objects.create(
+            oid_usuario=None,  # Notificación global para los usuarios
+            titulo=f"Modificación en artículo: {codigo.nombre_norma} Art. {codigo.numero_articulo}",
+            mensaje=mensaje,
+            tipo="articulo",
+            leida=False
+        )
+
+    @action(detail=False, methods=['get'], url_path='indice-navegable')
+    def indice_navegable(self, request):
+        """GET /api/codigos/indice-navegable/ — HU-16: Retorna el índice lateral navegable para códigos legales."""
+        normas = CodigoLegal.objects.values_list('nombre_norma', flat=True).distinct()
+        indice = []
+        for norma in normas:
+            articulos = list(CodigoLegal.objects.filter(nombre_norma=norma).values(
+                'oid_codigo', 'numero_articulo', 'vigencia'
+            ))
+            indice.append({
+                'norma': norma,
+                'total_articulos': len(articulos),
+                'articulos': articulos
+            })
+        return Response({'indice': indice, 'total_normas': len(indice)})
+
     @action(detail=True, methods=['get'], url_path='descargar-documento')
     def descargar_documento(self, request, pk=None):  # pylint: disable=unused-argument
         """GET /api/codigos/{id}/descargar-documento/
@@ -345,6 +377,24 @@ class DocumentoViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['oid_caso', 'tipo_documento']
+
+    @action(detail=False, methods=['get'], url_path='indice-navegable')
+    def indice_navegable(self, request):
+        """GET /api/documentos/indice-navegable/ — HU-16: Retorna el índice lateral navegable de documentos."""
+        documentos = Documento.objects.select_related('oid_caso').all()
+        estructura = {}
+        for doc in documentos:
+            caso_key = f"Caso #{doc.oid_caso.oid_caso} - {doc.oid_caso.titulo}"
+            if caso_key not in estructura:
+                estructura[caso_key] = []
+            estructura[caso_key].append({
+                'oid_documento': doc.oid_documento,
+                'nombre_archivo': doc.nombre_archivo,
+                'tipo_documento': doc.tipo_documento,
+                'fecha_subida': doc.fecha_subida
+            })
+        return Response({'indice_documentos': estructura})
+
 
 
 class PlanViewSet(viewsets.ReadOnlyModelViewSet):
