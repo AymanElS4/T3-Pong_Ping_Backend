@@ -16,7 +16,7 @@ class CodigoLegalListSerializer(serializers.ModelSerializer):
         model = CodigoLegal
         fields = [
             'oid_codigo', 'nombre_norma', 'numero_articulo',
-            'vigencia', 'estado_vigencia', 'archivo_pdf',
+            'vigencia', 'estado_vigencia', 'archivo_pdf', 'fecha_publicada',
         ]
         read_only_fields = ['oid_codigo']
 

@@ -23,6 +23,7 @@ class CodigoLegal(models.Model):
         blank=True
     )
     vigencia = models.BooleanField(default=True, db_index=True)
+    fecha_publicada = models.DateField(auto_now_add=True)
 
     class Meta:
         """Metadatos del modelo CodigoLegal."""
