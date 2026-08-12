@@ -442,6 +442,29 @@ class PagoViewSet(viewsets.ModelViewSet):
             tipo="in-app",
             leida=False
         )
+        
+    @action(detail=True, methods=['post'], url_path='aprobar')
+    def aprobar_pago(self, request, pk=None):
+        """Aprueba un pago/cambio de plan y notifica al usuario."""
+        user = self.request.user
+        # Validar que sea admin
+        if not (user.oid_rol and user.oid_rol.nombre == 'Administrador'):
+            return Response({'error': 'No tienes permisos para aprobar planes.'}, status=status.HTTP_403_FORBIDDEN)
+            
+        pago = self.get_object()
+        pago.estado_pago = 'Completado' # O 'Aprobado' según tu convención
+        pago.save()
+
+        # Generar notificación automática de aprobación
+        Notificacion.objects.create(
+            oid_usuario=pago.oid_usuario,
+            titulo="¡Cambio de Plan Aprobado!",
+            mensaje=f"Tu solicitud para el plan '{pago.oid_plan.nombre}' ha sido aprobada exitosamente. ¡Disfruta de tus nuevos beneficios!",
+            tipo="in-app",
+            leida=False
+        )
+
+        return Response({'message': 'Plan aprobado exitosamente y usuario notificado.'}, status=status.HTTP_200_OK)
 
 
 class NotificacionViewSet(viewsets.ModelViewSet):
@@ -469,6 +492,26 @@ class NotificacionViewSet(viewsets.ModelViewSet):
             serializer.save(oid_usuario=None)
         else:
             serializer.save(oid_usuario=user)
+            
+    @action(detail=False, methods=['post'], url_path='marcar-leidas')
+    def marcar_todas_leidas(self, request):
+        user = self.request.user
+        
+        if user.oid_rol and user.oid_rol.nombre == 'Administrador':
+            # Si es admin, marca como leídas TODAS las que estén pendientes
+            notificaciones = Notificacion.objects.filter(leida=False)
+        else:
+            # Si es usuario normal, marca las suyas Y las globales (oid_usuario=None)
+            from django.db.models import Q
+            notificaciones = Notificacion.objects.filter(
+                Q(oid_usuario=user) | Q(oid_usuario__isnull=True),
+                leida=False
+            )
+            
+        # Ejecuta la actualización en la base de datos
+        notificaciones.update(leida=True)
+        
+        return Response({'message': 'Notificaciones actualizadas correctamente en BD.'}, status=status.HTTP_200_OK)
 
 
 class RequestPasswordResetView(APIView):
