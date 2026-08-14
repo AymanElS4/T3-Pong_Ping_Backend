@@ -141,3 +141,32 @@ class TestCasoNormativaService:
         })
 
         assert response.status_code == status.HTTP_201_CREATED
+
+
+    def test_associate_article_case_not_found_returns_404(self):
+        """
+        HU-10: Associate Legal Articles
+        TC-33: Retorna 404/400 al intentar asociar un artículo a un caso inexistente.
+        """
+        self.client.force_authenticate(user=self.lawyer_1)
+
+        response = self.client.post(self.list_url, {
+            'oid_caso': 99999,
+            'oid_codigo': self.articulo.oid_codigo
+        })
+
+        assert response.status_code in [status.HTTP_404_NOT_FOUND, status.HTTP_400_BAD_REQUEST]
+
+    def test_associate_article_invalid_code_returns_validation_error(self):
+        """
+        HU-10: Associate Legal Articles
+        TC-34: Retorna error de validación cuando el artículo legal no existe.
+        """
+        self.client.force_authenticate(user=self.lawyer_1)
+
+        response = self.client.post(self.list_url, {
+            'oid_caso': self.caso_lawyer_1.oid_caso,
+            'oid_codigo': 99999
+        })
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST

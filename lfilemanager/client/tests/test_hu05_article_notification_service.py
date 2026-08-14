@@ -111,3 +111,42 @@ class TestHU05ArticleNotificationService:
         notif = Notificacion.objects.filter(tipo='articulo').last()
         assert notif is not None
         assert "144" in notif.titulo
+
+    def test_receive_notifications_of_changes_in_article_triggers_alert(self):
+        """
+        HU-05: Be able to receive notifications of changes in an article
+        TC-31: Valida que la actualización de un artículo genere automáticamente 
+               un registro de notificación en el sistema.
+        """
+        from client.models import Notificacion, CodigoLegal
+
+        # 1. Crear el artículo inicial
+        articulo = CodigoLegal.objects.create(
+            nombre_norma="Código de Comercio",
+            numero_articulo="Art. 10",
+            texto_contenido="Texto inicial...",
+            vigencia=True
+        )
+
+        # Autenticar usando el usuario configurado en el setup_method de la clase
+        usuario = getattr(self, 'lawyer_1', getattr(self, 'user', getattr(self, 'admin', None)))
+        if usuario:
+            self.client.force_authenticate(user=usuario)
+
+        # 2. URL de actualización del código legal (existe en tu router/views)
+        url = reverse('codigo-legal-detail', args=[articulo.oid_codigo])
+        payload = {
+            "nombre_norma": "Código de Comercio",
+            "numero_articulo": "Art. 10",
+            "texto_contenido": "Texto modificado y actualizado.",
+            "vigencia": True
+        }
+
+        conteo_inicial = Notificacion.objects.count()
+
+        # 3. Modificar el artículo mediante PUT
+        response = self.client.put(url, payload, format='json')
+
+        # 4. Validar que la respuesta sea 200 OK y que se haya creado la notificación en BD
+        assert response.status_code == status.HTTP_200_OK
+        assert Notificacion.objects.count() > conteo_inicial

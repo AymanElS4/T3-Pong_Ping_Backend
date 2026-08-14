@@ -112,3 +112,30 @@ class TestHU16NavigableSideIndexService:
         url_docs = reverse('documento-indice-navegable')
         res_docs = self.client.get(url_docs)
         assert res_docs.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_get_side_index_document_without_structure_returns_empty_nodes(self):
+        """
+        HU-16: Show a navigable side index
+        TC-30: Retorna lista de nodos vacía cuando el código legal no posee estructura jerárquica.
+        """
+        self.client.force_authenticate(user=self.lawyer_1)
+        url = reverse('codigolegal-side-index', args=[self.articulo_sin_indices.oid_codigo])
+
+        response = self.client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        resultados = data.get('results', data) if isinstance(data, dict) else data
+        assert len(resultados) == 0
+
+    def test_get_side_index_invalid_document_returns_404(self):
+        """
+        HU-16: Show a navigable side index
+        TC-38: Retorna 404 al solicitar el índice lateral de un código legal inexistente.
+        """
+        self.client.force_authenticate(user=self.lawyer_1)
+        url = reverse('codigolegal-side-index', args=[99999])
+
+        response = self.client.get(url)
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND        
