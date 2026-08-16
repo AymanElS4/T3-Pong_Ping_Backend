@@ -159,7 +159,7 @@ class TestHU16NavigableSideIndexService:
         res_docs = self.client.get(url_docs)
         assert res_docs.status_code == status.HTTP_401_UNAUTHORIZED
 
-    @pytest.mark.skip(reason="codigolegal-side-index endpoint not yet implemented in CodigoLegalViewSet")
+    @pytest.mark.skip(reason="codigolegal-side-index endpoint not yet implemented in CodigoLegalViewSet")  # noqa:E501
     def test_get_side_index_document_without_structure_returns_empty_nodes(self):  # noqa: E501
         """
         HU-16: Show a navigable side index
@@ -179,7 +179,7 @@ class TestHU16NavigableSideIndexService:
         resultados = data.get("results", data) if isinstance(data, dict) else data  # noqa: E501
         assert len(resultados) == 0
 
-    @pytest.mark.skip(reason="codigolegal-side-index endpoint not yet implemented in CodigoLegalViewSet")
+    @pytest.mark.skip(reason="codigolegal-side-index endpoint not yet implemented in CodigoLegalViewSet")  # noqa: E501
     def test_get_side_index_invalid_document_returns_404(self):
         """
         HU-16: Show a navigable side index
