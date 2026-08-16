@@ -9,18 +9,26 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('client', '0007_alter_codigolegal_archivo_pdf_and_more'),
+        ("client", "0007_alter_codigolegal_archivo_pdf_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='codigolegal',
-            name='archivo_pdf',
-            field=models.FileField(blank=True, null=True, storage=client.gas_storage.GASDriveStorage(), upload_to=client.models.codigo_legal.codigo_upload_path),
+            model_name="codigolegal",
+            name="archivo_pdf",
+            field=models.FileField(
+                blank=True,
+                null=True,
+                storage=client.gas_storage.GASDriveStorage(),
+                upload_to=client.models.codigo_legal.codigo_upload_path,
+            ),
         ),
         migrations.AlterField(
-            model_name='documento',
-            name='ruta_archivo',
-            field=models.FileField(storage=client.gas_storage.GASDriveStorage(), upload_to=client.models.documento.documento_upload_path),
+            model_name="documento",
+            name="ruta_archivo",
+            field=models.FileField(
+                storage=client.gas_storage.GASDriveStorage(),
+                upload_to=client.models.documento.documento_upload_path,
+            ),
         ),
     ]

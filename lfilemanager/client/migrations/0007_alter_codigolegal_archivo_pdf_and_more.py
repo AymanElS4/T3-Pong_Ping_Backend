@@ -7,18 +7,26 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('client', '0006_codigolegal_archivo_pdf_alter_notificacion_tipo'),
+        ("client", "0006_codigolegal_archivo_pdf_alter_notificacion_tipo"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='codigolegal',
-            name='archivo_pdf',
-            field=models.FileField(blank=True, null=True, storage=client.gas_storage.GASDriveStorage(), upload_to='codigos/%Y/%m/'),
+            model_name="codigolegal",
+            name="archivo_pdf",
+            field=models.FileField(
+                blank=True,
+                null=True,
+                storage=client.gas_storage.GASDriveStorage(),
+                upload_to="codigos/%Y/%m/",
+            ),
         ),
         migrations.AlterField(
-            model_name='documento',
-            name='ruta_archivo',
-            field=models.FileField(storage=client.gas_storage.GASDriveStorage(), upload_to='documentos/%Y/%m/'),
+            model_name="documento",
+            name="ruta_archivo",
+            field=models.FileField(
+                storage=client.gas_storage.GASDriveStorage(),
+                upload_to="documentos/%Y/%m/",
+            ),
         ),
     ]

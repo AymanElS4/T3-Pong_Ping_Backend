@@ -6,27 +6,27 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('client', '0003_plan_notificacion_pago'),
+        ("client", "0003_plan_notificacion_pago"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='codigolegal',
-            name='nombre_norma',
+            model_name="codigolegal",
+            name="nombre_norma",
             field=models.CharField(db_index=True, max_length=100),
         ),
         migrations.AlterField(
-            model_name='codigolegal',
-            name='numero_articulo',
+            model_name="codigolegal",
+            name="numero_articulo",
             field=models.CharField(db_index=True, max_length=50),
         ),
         migrations.AlterField(
-            model_name='codigolegal',
-            name='vigencia',
+            model_name="codigolegal",
+            name="vigencia",
             field=models.BooleanField(db_index=True, default=True),
         ),
         migrations.AlterUniqueTogether(
-            name='codigolegal',
-            unique_together={('nombre_norma', 'numero_articulo')},
+            name="codigolegal",
+            unique_together={("nombre_norma", "numero_articulo")},
         ),
     ]

@@ -3,6 +3,7 @@
 Covers authentication, user management, case management, legal codes,
 documents, payments, plans, notifications and PDF reporting.
 """
+
 import random
 
 from django.contrib.auth import authenticate
@@ -22,26 +23,43 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import (
-    Caso, CasoNormativa, CodigoLegal, Documento,
-    EstadoCaso, Notificacion, Pago, Plan,
-    Rol, TipoCaso, Usuario,
+    Caso,
+    CasoNormativa,
+    CodigoLegal,
+    Documento,
+    EstadoCaso,
+    Notificacion,
+    Pago,
+    Plan,
+    Rol,
+    TipoCaso,
+    Usuario,
 )
 from .serializers import (
-    CasoCreateSerializer, CasoNormativaSerializer, CasoSerializer,
-    CodigoLegalListSerializer, CodigoLegalSerializer,
-    DocumentoSerializer, EstadoCasoSerializer,
-    LoginSerializer, NotificacionSerializer,
-    PagoSerializer, PlanSerializer,
-    RegisterSerializer, RolSerializer,
-    TipoCasoSerializer, UsuarioSerializer, UsuarioUpdateSerializer,
+    CasoCreateSerializer,
+    CasoNormativaSerializer,
+    CasoSerializer,
+    CodigoLegalListSerializer,
+    CodigoLegalSerializer,
+    DocumentoSerializer,
+    EstadoCasoSerializer,
+    LoginSerializer,
+    NotificacionSerializer,
+    PagoSerializer,
+    PlanSerializer,
+    RegisterSerializer,
+    RolSerializer,
+    TipoCasoSerializer,
+    UsuarioSerializer,
+    UsuarioUpdateSerializer,
 )
-
 
 # ============================================================
 # Auth Views
 # ============================================================
 
-@api_view(['POST'])
+
+@api_view(["POST"])
 @permission_classes([AllowAny])
 def register_view(request):
     """POST /api/auth/register/ — Registrar un nuevo usuario."""
@@ -50,73 +68,79 @@ def register_view(request):
         user = serializer.save()
         # Generar tokens JWT
         refresh = RefreshToken.for_user(user)
-        refresh['email'] = user.email
-        refresh['rol'] = user.oid_rol.nombre if user.oid_rol else 'Básico'
-        return Response({
-            'user': UsuarioSerializer(user).data,
-            'tokens': {
-                'access': str(refresh.access_token),
-                'refresh': str(refresh),
-            }
-        }, status=status.HTTP_201_CREATED)
+        refresh["email"] = user.email
+        refresh["rol"] = user.oid_rol.nombre if user.oid_rol else "Básico"
+        return Response(
+            {
+                "user": UsuarioSerializer(user).data,
+                "tokens": {
+                    "access": str(refresh.access_token),
+                    "refresh": str(refresh),
+                },
+            },
+            status=status.HTTP_201_CREATED,
+        )
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['POST'])
+@api_view(["POST"])
 @permission_classes([AllowAny])
 def login_view(request):
     """POST /api/auth/login/ — Login con email y password, retorna JWT."""
     serializer = LoginSerializer(data=request.data)
     if serializer.is_valid():
-        email = serializer.validated_data['email']
-        password = serializer.validated_data['password']
+        email = serializer.validated_data["email"]
+        password = serializer.validated_data["password"]
 
         user = authenticate(request, email=email, password=password)
 
         if user is None:
             return Response(
-                {'error': 'Credenciales inválidas'},
+                {"error": "Credenciales inválidas"},
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
         if not user.estado:
             return Response(
-                {'error': 'Cuenta desactivada. Contacte al administrador.'},
-                status=status.HTTP_403_FORBIDDEN
+                {"error": "Cuenta desactivada. Contacte al administrador."},
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         # Generar tokens JWT
         refresh = RefreshToken.for_user(user)
-        refresh['email'] = user.email
-        refresh['rol'] = user.oid_rol.nombre if user.oid_rol else 'Básico'
+        refresh["email"] = user.email
+        refresh["rol"] = user.oid_rol.nombre if user.oid_rol else "Básico"
 
-        return Response({
-            'user': UsuarioSerializer(user).data,
-            'tokens': {
-                'access': str(refresh.access_token),
-                'refresh': str(refresh),
+        return Response(
+            {
+                "user": UsuarioSerializer(user).data,
+                "tokens": {
+                    "access": str(refresh.access_token),
+                    "refresh": str(refresh),
+                },
             }
-        })
+        )
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['GET'])
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def me_view(request):
     """GET /api/auth/me/ — Retorna info del usuario autenticado."""
     # Extraer user_id del token
-    user_id = request.auth.get('user_id') if request.auth else None
+    user_id = request.auth.get("user_id") if request.auth else None
     if not user_id:
         return Response(
-            {'error': 'Token inválido'}, status=status.HTTP_401_UNAUTHORIZED)
+            {"error": "Token inválido"}, status=status.HTTP_401_UNAUTHORIZED
+        )
 
     try:
-        user = Usuario.objects.select_related('oid_rol').get(
-            oid_usuario=user_id)
+        user = Usuario.objects.select_related("oid_rol").get(oid_usuario=user_id)  # noqa: E501
     except Usuario.DoesNotExist:
         return Response(
-            {'error': 'Usuario no encontrado'},
-            status=status.HTTP_404_NOT_FOUND)
+            {"error": "Usuario no encontrado"},
+            status=status.HTTP_404_NOT_FOUND
+        )
 
     return Response(UsuarioSerializer(user).data)
 
@@ -124,6 +148,7 @@ def me_view(request):
 # ============================================================
 # ViewSets — CRUD completo con filtros
 # ============================================================
+
 
 class RolViewSet(viewsets.ReadOnlyModelViewSet):
     """GET /api/roles/ — Listar roles disponibles."""
@@ -136,16 +161,16 @@ class RolViewSet(viewsets.ReadOnlyModelViewSet):
 class UsuarioViewSet(viewsets.ModelViewSet):
     """CRUD /api/usuarios/ — Gestión de usuarios (solo Admin)."""
 
-    queryset = Usuario.objects.select_related('oid_rol').all()
+    queryset = Usuario.objects.select_related("oid_rol").all()
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ['oid_rol', 'estado']
-    search_fields = ['nombre', 'email']
+    filterset_fields = ["oid_rol", "estado"]
+    search_fields = ["nombre", "email"]
 
     def get_serializer_class(self):
         """Return update serializer for write actions,
-          full serializer otherwise."""
-        if self.action in ['update', 'partial_update']:
+        full serializer otherwise."""
+        if self.action in ["update", "partial_update"]:
             return UsuarioUpdateSerializer
         return UsuarioSerializer
 
@@ -167,18 +192,22 @@ class EstadoCasoViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class CasoViewSet(viewsets.ModelViewSet):
-    """CRUD /api/casos/ — Gestión de casos 
+    """CRUD /api/casos/ — Gestión de casos
     legales con filtros (Aislamiento de Datos)."""
 
     queryset = Caso.objects.select_related(
-        'oid_abogado', 'oid_tipo_caso', 'oid_estado'
+        "oid_abogado", "oid_tipo_caso", "oid_estado"
     ).all()
     parser_classes = [JSONParser, MultiPartParser, FormParser]
     permission_classes = [IsAuthenticated]
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['oid_tipo_caso', 'oid_estado', 'oid_abogado']
-    search_fields = ['titulo', 'numero_expediente', 'descripcion', 'juzgado']
-    ordering_fields = ['fecha_inicio', 'fecha_cierre', 'titulo']
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    filterset_fields = ["oid_tipo_caso", "oid_estado", "oid_abogado"]
+    search_fields = ["titulo", "numero_expediente", "descripcion", "juzgado"]
+    ordering_fields = ["fecha_inicio", "fecha_cierre", "titulo"]
 
     # ============================================================
     # CAMBIO IMPLEMENTADO: Row-Level Security
@@ -189,70 +218,71 @@ class CasoViewSet(viewsets.ModelViewSet):
         Excepción: los Administradores ven todos los casos para auditorías.
         """
         user = self.request.user
-        # Si el usuario es Administrador, mantenemos el queryset completo para auditorías
-        if user.oid_rol and user.oid_rol.nombre == 'Administrador':
+        # Si el usuario es Administrador,
+        # mantenemos el queryset completo para auditorías
+        if user.oid_rol and user.oid_rol.nombre == "Administrador":
             return self.queryset
-        # Si es un Abogado estándar, filtramos por la relación correcta (oid_abogado)
+        # Si es un Abogado estándar,
+        # filtramos por la relación correcta (oid_abogado)
         return self.queryset.filter(oid_abogado=user)
+
     # ============================================================
 
     def get_serializer_class(self):
-        """Return creation serializer for write 
+        """Return creation serializer for write
         actions, full serializer otherwise."""
-        if self.action in ['create', 'update', 'partial_update']:
+        if self.action in ["create", "update", "partial_update"]:
             return CasoCreateSerializer
         return CasoSerializer
 
     def perform_create(self, serializer):
         """Crear caso y automáticamente crear documento si se envía PDF."""
-        archivo_pdf = self.request.FILES.get('archivo_pdf')
+        archivo_pdf = self.request.FILES.get("archivo_pdf")
         caso = serializer.save()
 
         if archivo_pdf:
-            nombre_archivo = archivo_pdf.name.rsplit('.', 1)[0]
+            nombre_archivo = archivo_pdf.name.rsplit(".", 1)[0]
             Documento.objects.create(
                 oid_caso=caso,
                 nombre_archivo=nombre_archivo,
                 ruta_archivo=archivo_pdf,
-                tipo_documento='Documento Principal'
+                tipo_documento="Documento Principal",
             )
 
-    @action(detail=True, methods=['get'], url_path='descargar-documento')
-    def descargar_documento(self, request, pk=None):  # pylint: disable=unused-argument
-        """GET /api/casos/{id}/descargar-documento/ — 
+    @action(detail=True, methods=["get"], url_path="descargar-documento")
+    def descargar_documento(self, request, pk=None):
+        """GET /api/casos/{id}/descargar-documento/ —
         Descargar documento principal del caso."""
         caso = self.get_object()
 
         documento = Documento.objects.filter(
-            oid_caso=caso,
-            tipo_documento='Documento Principal'
+            oid_caso=caso, tipo_documento="Documento Principal"
         ).first()
 
         if not documento or not documento.ruta_archivo:
             return Response(
-                {'error': 'No hay documento disponible para descargar'},
-                status=status.HTTP_404_NOT_FOUND
+                {"error": "No hay documento disponible para descargar"},
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         try:
             response = FileResponse(
-                documento.ruta_archivo.open('rb'),
-                content_type='application/pdf'
+                documento.ruta_archivo.open("rb"), content_type="application/pdf"  # noqa: E501
             )
             filename = documento.nombre_archivo or f"caso_{caso.oid_caso}"
-            if not filename.endswith('.pdf'):
-                filename += '.pdf'
-            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            if not filename.endswith(".pdf"):
+                filename += ".pdf"
+            response["Content-Disposition"] = f'attachment; filename="{filename}"'  # noqa: E501
             return response
         except FileNotFoundError:
             return Response(
-                {'error': 'El archivo no se encuentra en el servidor'},
-                status=status.HTTP_404_NOT_FOUND
+                {"error": "El archivo no se encuentra en el servidor"},
+                status=status.HTTP_404_NOT_FOUND,
             )
         except (OSError, RuntimeError) as exc:
             return Response(
-                {'error': f'Error al descargar: {str(exc)}'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                {"error": f"Error al descargar: {str(exc)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
 
@@ -263,91 +293,97 @@ class CodigoLegalViewSet(viewsets.ModelViewSet):
     parser_classes = [JSONParser, MultiPartParser, FormParser]
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ['vigencia']
-    search_fields = ['nombre_norma', 'numero_articulo', 'texto_contenido']
+    filterset_fields = ["vigencia"]
+    search_fields = ["nombre_norma", "numero_articulo", "texto_contenido"]
 
     def get_serializer_class(self):
-        """Return list serializer for list action, full serializer otherwise."""
-        if self.action == 'list':
+        """Return list serializer for list action,
+        full serializer otherwise."""
+        if self.action == "list":
             return CodigoLegalListSerializer
         return CodigoLegalSerializer
 
     def perform_update(self, serializer):
-        """HU-05: Notificar automáticamente a los usuarios sobre cambios en un artículo."""
+        """HU-05: Notificar automáticamente a
+        los usuarios sobre cambios en un artículo."""
         codigo = serializer.save()
         mensaje = (
-            f"Se han registrado modificaciones en el artículo {codigo.numero_articulo} "
-            f"perteneciente a la norma '{codigo.nombre_norma}'. Estado de vigencia: "
+            f"Se han registrado modificaciones en el artículo {codigo.numero_articulo} "  # noqa: E501
+            f"perteneciente a la norma '{codigo.nombre_norma}'. Estado de vigencia: "  # noqa: E501
             f"{'Vigente' if codigo.vigencia else 'Histórico/Derogado'}."
         )
         Notificacion.objects.create(
             oid_usuario=None,  # Notificación global para los usuarios
-            titulo=f"Modificación en artículo: {codigo.nombre_norma} Art. {codigo.numero_articulo}",
+            titulo=f"Modificación en artículo: {codigo.nombre_norma} Art. {codigo.numero_articulo}",  # noqa: E501
             mensaje=mensaje,
             tipo="articulo",
-            leida=False
+            leida=False,
         )
 
-    @action(detail=False, methods=['get'], url_path='indice-navegable')
+    @action(detail=False, methods=["get"], url_path="indice-navegable")
     def indice_navegable(self, request):
-        """GET /api/codigos/indice-navegable/ — HU-16: Retorna el índice lateral navegable para códigos legales."""
-        normas = CodigoLegal.objects.values_list('nombre_norma', flat=True).distinct()
+        """GET /api/codigos/indice-navegable/ — HU-16: Retorna el
+          índice lateral navegable para códigos legales."""
+        normas = CodigoLegal.objects.values_list("nombre_norma", flat=True).distinct()  # noqa: E501
         indice = []
         for norma in normas:
-            articulos = list(CodigoLegal.objects.filter(nombre_norma=norma).values(
-                'oid_codigo', 'numero_articulo', 'vigencia'
-            ))
-            indice.append({
-                'norma': norma,
-                'total_articulos': len(articulos),
-                'articulos': articulos
-            })
-        return Response({'indice': indice, 'total_normas': len(indice)})
+            articulos = list(
+                CodigoLegal.objects.filter(nombre_norma=norma).values(
+                    "oid_codigo", "numero_articulo", "vigencia"
+                )
+            )
+            indice.append(
+                {
+                    "norma": norma,
+                    "total_articulos": len(articulos),
+                    "articulos": articulos,
+                }
+            )
+        return Response({"indice": indice, "total_normas": len(indice)})
 
-    @action(detail=True, methods=['get'], url_path='descargar-documento')
-    def descargar_documento(self, request, pk=None):  # pylint: disable=unused-argument
+    @action(detail=True, methods=["get"], url_path="descargar-documento")
+    def descargar_documento(self, request, pk=None):
         """GET /api/codigos/{id}/descargar-documento/
-          — Descargar archivo PDF del código legal."""
+        — Descargar archivo PDF del código legal."""
         codigo = self.get_object()
 
         if not codigo.archivo_pdf:
             return Response(
-                {'error': 'No hay documento disponible para descargar'},
-                status=status.HTTP_404_NOT_FOUND
+                {"error": "No hay documento disponible para descargar"},
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         try:
             response = FileResponse(
-                codigo.archivo_pdf.open('rb'),
-                content_type='application/pdf'
+                codigo.archivo_pdf.open("rb"), content_type="application/pdf"
             )
             filename = codigo.nombre_norma or f"codigo_{codigo.oid_codigo}"
-            if not filename.endswith('.pdf'):
-                filename += '.pdf'
-            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            if not filename.endswith(".pdf"):
+                filename += ".pdf"
+            response["Content-Disposition"] = f'attachment; filename="{filename}"'  # noqa: E501
             return response
         except FileNotFoundError:
             return Response(
-                {'error': 'El archivo no se encuentra en el servidor'},
-                status=status.HTTP_404_NOT_FOUND
+                {"error": "El archivo no se encuentra en el servidor"},
+                status=status.HTTP_404_NOT_FOUND,
             )
         except (OSError, RuntimeError) as exc:
             return Response(
-                {'error': f'Error al descargar: {str(exc)}'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                {"error": f"Error al descargar: {str(exc)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
 
 class CasoNormativaViewSet(viewsets.ModelViewSet):
     """CRUD /api/caso-normativas/ — Asociar códigos legales a casos."""
 
-    queryset = CasoNormativa.objects.select_related(
-        'oid_caso', 'oid_codigo'
-    ).order_by('-fecha_asociacion')
+    queryset = CasoNormativa.objects.select_related("oid_caso", "oid_codigo").order_by(  # noqa: E501
+        "-fecha_asociacion"
+    )
     serializer_class = CasoNormativaSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['oid_caso', 'oid_codigo']
+    filterset_fields = ["oid_caso", "oid_codigo"]
 
     def get_queryset(self):
         """Aísla las asociaciones por dueño del caso.
@@ -355,46 +391,50 @@ class CasoNormativaViewSet(viewsets.ModelViewSet):
         El Administrador ve todas; un abogado solo las de sus propios casos.
         """
         user = self.request.user
-        if user.oid_rol and user.oid_rol.nombre == 'Administrador':
+        if user.oid_rol and user.oid_rol.nombre == "Administrador":
             return self.queryset
         return self.queryset.filter(oid_caso__oid_abogado=user)
 
     def perform_create(self, serializer):
         """Impide asociar normativas a casos que no pertenecen al usuario."""
         user = self.request.user
-        caso = serializer.validated_data.get('oid_caso')
-        is_admin = bool(user.oid_rol and user.oid_rol.nombre == 'Administrador')
+        caso = serializer.validated_data.get("oid_caso")
+        is_admin = bool(user.oid_rol and user.oid_rol.nombre == "Administrador")  # noqa: E501
         if not is_admin and caso and caso.oid_abogado_id != user.oid_usuario:
-            raise PermissionDenied('No puede asociar normativas a un caso que no le pertenece.')
+            raise PermissionDenied(
+                "No puede asociar normativas a un caso que no le pertenece."
+            )
         serializer.save()
 
 
 class DocumentoViewSet(viewsets.ModelViewSet):
     """CRUD /api/documentos/ — Gestión de documentos PDF."""
 
-    queryset = Documento.objects.select_related('oid_caso').all()
+    queryset = Documento.objects.select_related("oid_caso").all()
     serializer_class = DocumentoSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['oid_caso', 'tipo_documento']
+    filterset_fields = ["oid_caso", "tipo_documento"]
 
-    @action(detail=False, methods=['get'], url_path='indice-navegable')
+    @action(detail=False, methods=["get"], url_path="indice-navegable")
     def indice_navegable(self, request):
-        """GET /api/documentos/indice-navegable/ — HU-16: Retorna el índice lateral navegable de documentos."""
-        documentos = Documento.objects.select_related('oid_caso').all()
+        """GET /api/documentos/indice-navegable/ — HU-16:
+        Retorna el índice lateral navegable de documentos."""
+        documentos = Documento.objects.select_related("oid_caso").all()
         estructura = {}
         for doc in documentos:
             caso_key = f"Caso #{doc.oid_caso.oid_caso} - {doc.oid_caso.titulo}"
             if caso_key not in estructura:
                 estructura[caso_key] = []
-            estructura[caso_key].append({
-                'oid_documento': doc.oid_documento,
-                'nombre_archivo': doc.nombre_archivo,
-                'tipo_documento': doc.tipo_documento,
-                'fecha_subida': doc.fecha_subida
-            })
-        return Response({'indice_documentos': estructura})
-
+            estructura[caso_key].append(
+                {
+                    "oid_documento": doc.oid_documento,
+                    "nombre_archivo": doc.nombre_archivo,
+                    "tipo_documento": doc.tipo_documento,
+                    "fecha_subida": doc.fecha_subida,
+                }
+            )
+        return Response({"indice_documentos": estructura})
 
 
 class PlanViewSet(viewsets.ReadOnlyModelViewSet):
@@ -408,16 +448,16 @@ class PlanViewSet(viewsets.ReadOnlyModelViewSet):
 class PagoViewSet(viewsets.ModelViewSet):
     """CRUD /api/pagos/ — Gestión de pagos."""
 
-    queryset = Pago.objects.select_related('oid_usuario', 'oid_plan').all()
+    queryset = Pago.objects.select_related("oid_usuario", "oid_plan").all()
     serializer_class = PagoSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['oid_usuario', 'oid_plan', 'estado_pago']
+    filterset_fields = ["oid_usuario", "oid_plan", "estado_pago"]
 
     def get_queryset(self):
         """Usuarios solo ven sus propios pagos; el admin ve todos."""
         user = self.request.user
-        if user.oid_rol and user.oid_rol.nombre == 'Administrador':
+        if user.oid_rol and user.oid_rol.nombre == "Administrador":
             return self.queryset
         return self.queryset.filter(oid_usuario=user)
 
@@ -428,11 +468,11 @@ class PagoViewSet(viewsets.ModelViewSet):
 
         # Crear notificación in-app para el usuario sobre el pago
         mensaje_notif = (
-            f"Estimado(a) {user.nombre or 'usuario'}, hemos recibido su solicitud "
-            f"para suscribirse al plan '{pago.oid_plan.nombre}' por un valor de "
-            f"${pago.monto}. Un representante de nuestro equipo le contactará "
-            f"próximamente al correo electrónico '{user.email}' (o puede escribirnos "
-            f"a pagos@legalfilemanager.com) para coordinar el pago correspondiente "
+            f"Estimado(a) {user.nombre or 'usuario'}, hemos recibido su solicitud "  # noqa: E501
+            f"para suscribirse al plan '{pago.oid_plan.nombre}' por un valor de "  # noqa: E501
+            f"${pago.monto}. Un representante de nuestro equipo le contactará "  # noqa: E501
+            f"próximamente al correo electrónico '{user.email}' (o puede escribirnos "  # noqa: E501
+            f"a pagos@legalfilemanager.com) para coordinar el pago correspondiente "  # noqa: E501
             f"y activar todas sus funciones premium."
         )
         Notificacion.objects.create(
@@ -440,92 +480,107 @@ class PagoViewSet(viewsets.ModelViewSet):
             titulo=f"Solicitud de suscripción al Plan {pago.oid_plan.nombre}",
             mensaje=mensaje_notif,
             tipo="in-app",
-            leida=False
+            leida=False,
         )
-        
-    @action(detail=True, methods=['post'], url_path='aprobar')
+
+    @action(detail=True, methods=["post"], url_path="aprobar")
     def aprobar_pago(self, request, pk=None):
         """Aprueba un pago/cambio de plan y notifica al usuario."""
         user = self.request.user
         # Validar que sea admin
-        if not (user.oid_rol and user.oid_rol.nombre == 'Administrador'):
-            return Response({'error': 'No tienes permisos para aprobar planes.'}, status=status.HTTP_403_FORBIDDEN)
-            
+        if not (user.oid_rol and user.oid_rol.nombre == "Administrador"):
+            return Response(
+                {"error": "No tienes permisos para aprobar planes."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         pago = self.get_object()
-        pago.estado_pago = 'Completado' # O 'Aprobado' según tu convención
+        pago.estado_pago = "Completado"  # O 'Aprobado' según tu convención
         pago.save()
 
         # Generar notificación automática de aprobación
         Notificacion.objects.create(
             oid_usuario=pago.oid_usuario,
             titulo="¡Cambio de Plan Aprobado!",
-            mensaje=f"Tu solicitud para el plan '{pago.oid_plan.nombre}' ha sido aprobada exitosamente. ¡Disfruta de tus nuevos beneficios!",
+            mensaje=f"Tu solicitud para el plan '{pago.oid_plan.nombre}' ha sido aprobada exitosamente. ¡Disfruta de tus nuevos beneficios!",  # noqa: E501
             tipo="in-app",
-            leida=False
+            leida=False,
         )
 
-        return Response({'message': 'Plan aprobado exitosamente y usuario notificado.'}, status=status.HTTP_200_OK)
+        return Response(
+            {"message": "Plan aprobado exitosamente y usuario notificado."},
+            status=status.HTTP_200_OK,
+        )
 
 
 class NotificacionViewSet(viewsets.ModelViewSet):
     """CRUD /api/notificaciones/ — Sistema de notificaciones."""
 
-    queryset = Notificacion.objects.select_related('oid_usuario').all()
+    queryset = Notificacion.objects.select_related("oid_usuario").all()
     serializer_class = NotificacionSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['leida', 'tipo', 'oid_usuario']
+    filterset_fields = ["leida", "tipo", "oid_usuario"]
 
     def get_queryset(self):
-        """Admin ve todas; usuarios solo ven las suyas o las globales (sin destinatario)."""
+        """Admin ve todas; usuarios solo ven las suyas
+        o las globales (sin destinatario)."""
         user = self.request.user
-        if user.oid_rol and user.oid_rol.nombre == 'Administrador':
+        if user.oid_rol and user.oid_rol.nombre == "Administrador":
             return self.queryset
-        # Users see notifications targeted to them OR global notifications (oid_usuario is null)
-        return self.queryset.filter(Q(oid_usuario=user) | Q(oid_usuario__isnull=True))
+        # Users see notifications targeted to them OR
+        # global notifications (oid_usuario is null)
+        return self.queryset.filter(Q(oid_usuario=user) | Q(oid_usuario__isnull=True))  # noqa: E501
 
     def perform_create(self, serializer):
-        """Admin crea notificaciones globales; otros usuarios crean las suyas."""
+        """Admin crea notificaciones globales;
+        otros usuarios crean las suyas."""
         user = self.request.user
-        if user.oid_rol and user.oid_rol.nombre == 'Administrador':
+        if user.oid_rol and user.oid_rol.nombre == "Administrador":
             # Admin-created notifications are global (para todos)
             serializer.save(oid_usuario=None)
         else:
             serializer.save(oid_usuario=user)
-            
-    @action(detail=False, methods=['post'], url_path='marcar-leidas')
+
+    @action(detail=False, methods=["post"], url_path="marcar-leidas")
     def marcar_todas_leidas(self, request):
         user = self.request.user
-        
-        if user.oid_rol and user.oid_rol.nombre == 'Administrador':
+
+        if user.oid_rol and user.oid_rol.nombre == "Administrador":
             # Si es admin, marca como leídas TODAS las que estén pendientes
             notificaciones = Notificacion.objects.filter(leida=False)
         else:
-            # Si es usuario normal, marca las suyas Y las globales (oid_usuario=None)
+            # Si es usuario normal,
+            # marca las suyas Y las globales (oid_usuario=None)
             from django.db.models import Q
+
             notificaciones = Notificacion.objects.filter(
-                Q(oid_usuario=user) | Q(oid_usuario__isnull=True),
-                leida=False
+                Q(oid_usuario=user) | Q(oid_usuario__isnull=True), leida=False
             )
-            
+
         # Ejecuta la actualización en la base de datos
         notificaciones.update(leida=True)
-        
-        return Response({'message': 'Notificaciones actualizadas correctamente en BD.'}, status=status.HTTP_200_OK)
+
+        return Response(
+            {"message": "Notificaciones actualizadas correctamente en BD."},
+            status=status.HTTP_200_OK,
+        )
 
 
 class RequestPasswordResetView(APIView):
-    """POST /api/auth/password-reset-request/ — Enviar OTP de recuperación de contraseña."""
+    """POST /api/auth/password-reset-request/ —
+    Enviar OTP de recuperación de contraseña."""
 
     permission_classes = [AllowAny]
 
     def post(self, request):
         """Generar y enviar un código OTP de 6 dígitos al correo registrado."""
-        email = request.data.get('email')
+        email = request.data.get("email")
         if not email:
             return Response(
-                {"error": "El correo es requerido."}, 
-                status=status.HTTP_400_BAD_REQUEST)
+                {"error": "El correo es requerido."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         try:
             user = Usuario.objects.get(email=email, estado=True)
@@ -545,33 +600,34 @@ class RequestPasswordResetView(APIView):
                 f"Expira en 15 minutos."
             )
 
-            send_mail(asunto, mensaje, settings.DEFAULT_FROM_EMAIL, [user.email])
+            send_mail(asunto, mensaje, settings.DEFAULT_FROM_EMAIL, [user.email])   # noqa: E501
 
         except Usuario.DoesNotExist:
             # Seguridad: no revelar si el correo existe o no
             pass
 
         return Response(
-            {"message": "Código enviado si el correo existe."}, 
-            status=status.HTTP_200_OK)
+            {"message": "Código enviado si el correo existe."},
+            status=status.HTTP_200_OK,
+        )
 
 
 class ConfirmPasswordResetView(APIView):
-    """POST /api/auth/password-reset-confirm/ 
+    """POST /api/auth/password-reset-confirm/
     — Confirmar OTP y actualizar contraseña."""
 
     permission_classes = [AllowAny]
 
     def post(self, request):
         """Validar el OTP y cambiar la contraseña del usuario."""
-        email = request.data.get('email')
-        codigo = request.data.get('codigo')
-        password = request.data.get('password')
+        email = request.data.get("email")
+        codigo = request.data.get("codigo")
+        password = request.data.get("password")
 
         if not all([email, codigo, password]):
             return Response(
                 {"error": "Todos los campos son obligatorios."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         # 1. Recuperamos el código que guardamos en el cache
@@ -581,7 +637,7 @@ class ConfirmPasswordResetView(APIView):
         if not codigo_guardado or codigo_guardado != str(codigo):
             return Response(
                 {"error": "El código es inválido o ha expirado."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         try:
@@ -596,7 +652,7 @@ class ConfirmPasswordResetView(APIView):
 
             return Response(
                 {"message": "Contraseña actualizada con éxito."},
-                status=status.HTTP_200_OK
+                status=status.HTTP_200_OK,
             )
         except Usuario.DoesNotExist:
             return Response(
@@ -609,38 +665,45 @@ class ConfirmPasswordResetView(APIView):
 # Extra Functional Endpoints (Auth & Reports)
 # ============================================================
 
-@api_view(['POST'])
+
+@api_view(["POST"])
 @permission_classes([AllowAny])
 def password_reset_view(request):
     """POST /api/auth/password-reset/ — Mock de reset de contraseña."""
-    email = request.data.get('email')
+    email = request.data.get("email")
     if not email:
-        return Response({'error': 'Email es requerido'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {"error": "Email es requerido"}, status=status.HTTP_400_BAD_REQUEST
+        )
     # Aquí iría la lógica de envío de email
-    return Response({'message': f'Se ha enviado un enlace de recuperación a {email}'})
+    return Response({"message": f"Se ha enviado un enlace de recuperación a {email}"})  # noqa: E501
 
 
-@api_view(['POST'])
+@api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def verify_2fa_view(request):
     """POST /api/auth/2fa/verify/ — Mock de verificación 2FA."""
-    code = request.data.get('code')
+    code = request.data.get("code")
     if code == "123456":  # Mock validation
-        return Response({'status': 'verified'})
-    return Response({'error': 'Código inválido'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"status": "verified"})
+    return Response({"error": "Código inválido"},
+                    status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['GET'])
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def generar_reporte_pdf_view(request, caso_id):  # pylint: disable=unused-argument
+def generar_reporte_pdf_view(request, caso_id):
     """GET /api/reportes/caso/{id}/pdf/ — Mock de generación de PDF."""
     try:
         caso = Caso.objects.get(oid_caso=caso_id)
         # Mock de respuesta PDF
-        return Response({
-            'message': f'Generando reporte PDF para el caso {caso.numero_expediente}',
-            'download_url': f'/media/reports/caso_{caso_id}.pdf'
-        })
+        return Response(
+            {
+                "message": f"Generando reporte PDF para el caso {caso.numero_expediente}",  # noqa: E501
+                "download_url": f"/media/reports/caso_{caso_id}.pdf",
+            }
+        )
     except Caso.DoesNotExist:
         return Response(
-            {'error': 'Caso no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+            {"error": "Caso no encontrado"}, status=status.HTTP_404_NOT_FOUND
+        )

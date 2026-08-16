@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('client', '0005_make_notificacion_oid_usuario_nullable'),
+        ("client", "0005_make_notificacion_oid_usuario_nullable"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='codigolegal',
-            name='archivo_pdf',
-            field=models.FileField(blank=True, null=True, upload_to='codigos/%Y/%m/'),
+            model_name="codigolegal",
+            name="archivo_pdf",
+            field=models.FileField(blank=True, null=True, upload_to="codigos/%Y/%m/"),
         ),
         migrations.AlterField(
-            model_name='notificacion',
-            name='tipo',
-            field=models.CharField(default='in-app', max_length=30),
+            model_name="notificacion",
+            name="tipo",
+            field=models.CharField(default="in-app", max_length=30),
         ),
     ]

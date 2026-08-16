@@ -8,54 +8,84 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('client', '0002_alter_caso_options_alter_casonormativa_options_and_more'),
+        ("client", "0002_alter_caso_options_alter_casonormativa_options_and_more"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Plan',
+            name="Plan",
             fields=[
-                ('oid_plan', models.AutoField(primary_key=True, serialize=False)),
-                ('nombre', models.CharField(max_length=50)),
-                ('precio_mensual', models.DecimalField(decimal_places=2, max_digits=10)),
-                ('precio_anual', models.DecimalField(decimal_places=2, max_digits=10)),
-                ('descripcion', models.TextField(blank=True, default='')),
-                ('estado', models.BooleanField(default=True)),
+                ("oid_plan", models.AutoField(primary_key=True, serialize=False)),
+                ("nombre", models.CharField(max_length=50)),
+                (
+                    "precio_mensual",
+                    models.DecimalField(decimal_places=2, max_digits=10),
+                ),
+                ("precio_anual", models.DecimalField(decimal_places=2, max_digits=10)),
+                ("descripcion", models.TextField(blank=True, default="")),
+                ("estado", models.BooleanField(default=True)),
             ],
             options={
-                'db_table': 'plan',
+                "db_table": "plan",
             },
         ),
         migrations.CreateModel(
-            name='Notificacion',
+            name="Notificacion",
             fields=[
-                ('oid_notificacion', models.AutoField(primary_key=True, serialize=False)),
-                ('titulo', models.CharField(max_length=150)),
-                ('mensaje', models.TextField()),
-                ('tipo', models.CharField(max_length=30)),
-                ('leida', models.BooleanField(default=False)),
-                ('fecha_creacion', models.DateTimeField(auto_now_add=True)),
-                ('oid_usuario', models.ForeignKey(db_column='oid_usuario', on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                (
+                    "oid_notificacion",
+                    models.AutoField(primary_key=True, serialize=False),
+                ),
+                ("titulo", models.CharField(max_length=150)),
+                ("mensaje", models.TextField()),
+                ("tipo", models.CharField(max_length=30)),
+                ("leida", models.BooleanField(default=False)),
+                ("fecha_creacion", models.DateTimeField(auto_now_add=True)),
+                (
+                    "oid_usuario",
+                    models.ForeignKey(
+                        db_column="oid_usuario",
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'db_table': 'notificacion',
-                'ordering': ['-fecha_creacion'],
+                "db_table": "notificacion",
+                "ordering": ["-fecha_creacion"],
             },
         ),
         migrations.CreateModel(
-            name='Pago',
+            name="Pago",
             fields=[
-                ('oid_pago', models.AutoField(primary_key=True, serialize=False)),
-                ('monto', models.DecimalField(decimal_places=2, max_digits=10)),
-                ('fecha_pago', models.DateTimeField(auto_now_add=True)),
-                ('metodo_pago', models.CharField(max_length=50)),
-                ('estado_pago', models.CharField(max_length=20)),
-                ('referencia_externa', models.CharField(blank=True, default='', max_length=100)),
-                ('oid_usuario', models.ForeignKey(db_column='oid_usuario', on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
-                ('oid_plan', models.ForeignKey(db_column='oid_plan', on_delete=django.db.models.deletion.PROTECT, to='client.plan')),
+                ("oid_pago", models.AutoField(primary_key=True, serialize=False)),
+                ("monto", models.DecimalField(decimal_places=2, max_digits=10)),
+                ("fecha_pago", models.DateTimeField(auto_now_add=True)),
+                ("metodo_pago", models.CharField(max_length=50)),
+                ("estado_pago", models.CharField(max_length=20)),
+                (
+                    "referencia_externa",
+                    models.CharField(blank=True, default="", max_length=100),
+                ),
+                (
+                    "oid_usuario",
+                    models.ForeignKey(
+                        db_column="oid_usuario",
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "oid_plan",
+                    models.ForeignKey(
+                        db_column="oid_plan",
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to="client.plan",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'pago',
+                "db_table": "pago",
             },
         ),
     ]

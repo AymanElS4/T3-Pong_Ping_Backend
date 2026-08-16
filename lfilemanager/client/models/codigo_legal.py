@@ -1,4 +1,6 @@
-"""Module for the CodigoLegal model representing legal codes and regulations."""
+"""Module for the CodigoLegal model
+representing legal codes and regulations."""
+
 from django.db import models
 
 from client.gas_storage import GASDriveStorage
@@ -6,7 +8,7 @@ from client.gas_storage import GASDriveStorage
 
 def codigo_upload_path(instance, filename):
     """Return the upload path for a legal code PDF file."""
-    return f'Códigos Legales/{instance.nombre_norma}/{filename}'
+    return f"Códigos Legales/{instance.nombre_norma}/{filename}"
 
 
 class CodigoLegal(models.Model):
@@ -17,10 +19,8 @@ class CodigoLegal(models.Model):
     numero_articulo = models.CharField(max_length=50, db_index=True)
     texto_contenido = models.TextField()
     archivo_pdf = models.FileField(
-        upload_to=codigo_upload_path,
-        storage=GASDriveStorage(),
-        null=True,
-        blank=True
+        upload_to=codigo_upload_path, storage=GASDriveStorage(),
+        null=True, blank=True
     )
     vigencia = models.BooleanField(default=True, db_index=True)
     fecha_publicada = models.DateField(auto_now_add=True)
@@ -28,9 +28,9 @@ class CodigoLegal(models.Model):
     class Meta:
         """Metadatos del modelo CodigoLegal."""
 
-        db_table = 'codigo_legal'
-        ordering = ['nombre_norma', 'numero_articulo']
-        unique_together = [('nombre_norma', 'numero_articulo')]
+        db_table = "codigo_legal"
+        ordering = ["nombre_norma", "numero_articulo"]
+        unique_together = [("nombre_norma", "numero_articulo")]
 
     def __str__(self):
         """Devuelve la representación en cadena del código legal."""

@@ -1,0 +1,14 @@
+[flake8]
+exclude = 
+    venv,
+    .venv,
+    env,
+    .git,
+    __pycache__,
+    build,
+    dist,
+    __pycache__,
+    migrations
+
+per-file-ignores =
+    __init__.py: F401
