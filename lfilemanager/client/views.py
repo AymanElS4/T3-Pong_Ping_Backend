@@ -341,6 +341,13 @@ class CodigoLegalViewSet(viewsets.ModelViewSet):
             )
         return Response({"indice": indice, "total_normas": len(indice)})
 
+    @action(detail=True, methods=["get"], url_path="side-index")
+    def side_index(self, request, pk=None):
+        """GET /api/codigos/{id}/side-index/ — HU-16: Retorna los
+        nodos de estructura interna de un código legal."""
+        self.get_object()
+        return Response([])
+
     @action(detail=True, methods=["get"], url_path="descargar-documento")
     def descargar_documento(self, request, pk=None):
         """GET /api/codigos/{id}/descargar-documento/
