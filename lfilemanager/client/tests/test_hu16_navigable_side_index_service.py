@@ -57,6 +57,14 @@ class TestHU16NavigableSideIndexService:
             vigencia=True,
         )
 
+        # Código legal sin índices (para TC-30)
+        self.articulo_sin_indices = CodigoLegal.objects.create(
+            nombre_norma="Ley Especial",
+            numero_articulo="999",
+            texto_contenido="Artículo sin estructura",
+            vigencia=True,
+        )
+
         # Datos de prueba para Caso y Documentos
         self.caso = Caso.objects.create(
             titulo="Caso Herencia Civil",
@@ -157,7 +165,7 @@ class TestHU16NavigableSideIndexService:
         TC-30: Retorna lista de nodos vacía cuando
         el código legal no posee estructura jerárquica.
         """
-        self.client.force_authenticate(user=self.lawyer_1)
+        self.client.force_authenticate(user=self.user)
         url = reverse(
             "codigolegal-side-index",
             args=[self.articulo_sin_indices.oid_codigo]
@@ -176,7 +184,7 @@ class TestHU16NavigableSideIndexService:
         TC-38: Retorna 404 al solicitar el
         índice lateral de un código legal inexistente.
         """
-        self.client.force_authenticate(user=self.lawyer_1)
+        self.client.force_authenticate(user=self.user)
         url = reverse("codigolegal-side-index", args=[99999])
 
         response = self.client.get(url)
