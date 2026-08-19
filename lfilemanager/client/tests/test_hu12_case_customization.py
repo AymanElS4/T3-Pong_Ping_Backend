@@ -9,7 +9,8 @@ pytestmark = pytest.mark.django_db
 
 
 class TestHU12CaseCustomization:
-    """Tests for HU-12: Case Customization (categorization using case types)."""
+    """Tests for HU-12: Case Customization
+      (categorization using case types)."""
 
     @pytest.fixture(autouse=True)
     def setup_method(self):
@@ -29,7 +30,8 @@ class TestHU12CaseCustomization:
 
         self.estado_open = EstadoCaso.objects.create(nombre="OPEN")
 
-        # Create different custom case types (representing customization categories)
+        # Create different custom case types
+        #  (representing customization categories)
         self.tipo_civil = TipoCaso.objects.create(
             nombre="Civil", descripcion="Casos Civiles"
         )
