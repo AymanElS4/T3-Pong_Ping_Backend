@@ -698,7 +698,6 @@ def verify_2fa_view(request):
 
 
 @api_view(["GET"])
-
 def generar_reporte_pdf_view(request, caso_id):
     """GET /api/reportes/caso/{id}/pdf/ — Mock de generación de PDF."""
     try:
